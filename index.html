@@ -42,12 +42,12 @@
 
         // テクスチャローダーの作成
         const textureLoader = new THREE.TextureLoader();
-        const texture = textureLoader.load('./model/Body_Mike.png', () => {
+        const texture = textureLoader.load('model/Body_Mike.png', () => {
             renderer.render(scene, camera);
         });
 
         // モデルの読み込み
-        gltfLoader.load('./model/cat_model.glb', (gltf) => {
+        gltfLoader.load('model/256NEKO.gltf', (gltf) => {
             const model = gltf.scene;
             model.traverse((child) => {
                 if (child.isMesh) {
