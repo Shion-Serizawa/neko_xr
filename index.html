@@ -102,8 +102,8 @@
                 }
             });
             
-            // モデルのスケールを調整（ARでは小さめに）
-            model.scale.set(0.5, 0.5, 0.5);
+            // モデルの初期スケールを設定
+            model.scale.set(1.1, 1.1, 1.1);
             
             // モデルを少し下げて床の上に配置
             model.position.set(0, -0.5, -0.5); // 猫の位置を近くに調整
@@ -157,6 +157,52 @@
             positionControls.appendChild(rightButton);
 
             document.body.appendChild(positionControls);
+            
+            // スケールスライダーのUIを作成
+            const scaleControls = document.createElement('div');
+            scaleControls.style.position = 'absolute';
+            scaleControls.style.bottom = '130px';
+            scaleControls.style.left = '50%';
+            scaleControls.style.transform = 'translateX(-50%)';
+            scaleControls.style.backgroundColor = 'rgba(0, 0, 0, 0.5)';
+            scaleControls.style.color = 'white';
+            scaleControls.style.padding = '10px';
+            scaleControls.style.borderRadius = '4px';
+            scaleControls.style.fontFamily = 'sans-serif';
+            scaleControls.style.display = 'flex';
+            scaleControls.style.alignItems = 'center';
+            scaleControls.style.gap = '10px';
+            
+            // ラベルの作成
+            const scaleLabel = document.createElement('label');
+            scaleLabel.textContent = '猫の大きさ:';
+            scaleLabel.setAttribute('for', 'scale');
+            scaleControls.appendChild(scaleLabel);
+            
+            // スライダーの作成
+            const scaleSlider = document.createElement('input');
+            scaleSlider.type = 'range';
+            scaleSlider.id = 'scale';
+            scaleSlider.name = 'scale';
+            scaleSlider.min = '0.1';
+            scaleSlider.max = '10.1';
+            scaleSlider.value = '1.1';
+            scaleSlider.step = '1';
+            scaleSlider.style.width = '150px';
+            scaleControls.appendChild(scaleSlider);
+            
+            // スケール値を表示するための要素
+            const scaleValue = document.createElement('span');
+            scaleValue.textContent = scaleSlider.value;
+            scaleControls.appendChild(scaleValue);
+            
+            // スライダーの値が変更されたときのイベントリスナー
+            scaleSlider.addEventListener('input', () => {
+                model.scale.set(parseFloat(scaleSlider.value), parseFloat(scaleSlider.value), parseFloat(scaleSlider.value));
+                scaleValue.textContent = scaleSlider.value;
+            });
+            
+            document.body.appendChild(scaleControls);
 
             // モデルの読み込みが完了したらローディングテキストを非表示に
             document.getElementById('loading-text').style.display = 'none';
