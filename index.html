@@ -3,17 +3,54 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Three.jsで猫のモデルを表示</title>
+    <title>ARで猫のモデルを表示</title>
     <style>
-        body { margin: 0; }
+        body { margin: 0; overflow: hidden; }
         canvas { display: block; }
+        #ar-button {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 12px 24px;
+            border: none;
+            border-radius: 4px;
+            background: #4285f4;
+            color: white;
+            font-size: 16px;
+            cursor: pointer;
+            display: none;
+        }
+        #ar-button:disabled {
+            background: #ccc;
+            color: #666;
+            cursor: not-allowed;
+        }
+        #loading-text {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-family: sans-serif;
+            font-size: 16px;
+            color: white;
+            background: rgba(0, 0, 0, 0.5);
+            padding: 10px 20px;
+            border-radius: 4px;
+        }
     </style>
     <!-- Three.jsのライブラリをCDNから読み込む -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128/examples/js/loaders/GLTFLoader.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128/examples/js/controls/OrbitControls.js"></script>
+    <!-- WebXR用のライブラリ -->
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128/examples/js/webxr/VRButton.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128/examples/js/webxr/ARButton.js"></script>
 </head>
 <body>
+    <div id="loading-text">モデルを読み込み中...</div>
+    <button id="ar-button">ARで猫を表示</button>
+    
     <script>
         // シーンの作成
         const scene = new THREE.Scene();
@@ -23,9 +60,13 @@
         camera.position.set(0, 1, 3);
 
         // レンダラーの作成
-        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        const renderer = new THREE.WebGLRenderer({
+            antialias: true,
+            alpha: true // 透明な背景を許可（ARで必要）
+        });
         renderer.setSize(window.innerWidth, window.innerHeight);
         renderer.outputEncoding = THREE.sRGBEncoding; // 色の補正
+        renderer.xr.enabled = true; // WebXRを有効化
         document.body.appendChild(renderer.domElement);
 
         // 環境光
@@ -39,34 +80,174 @@
 
         // GLTFローダーの作成
         const gltfLoader = new THREE.GLTFLoader();
-
+        
         // テクスチャローダーの作成
         const textureLoader = new THREE.TextureLoader();
         const texture = textureLoader.load('model/Body_Mike.png', () => {
             renderer.render(scene, camera);
         });
 
+        let model;
         // モデルの読み込み
-        gltfLoader.load('model/256NEKO.gltf', (gltf) => {
-            const model = gltf.scene;
+        gltfLoader.load('walk/walk.gltf', (gltf) => {
+            model = gltf.scene;
             model.traverse((child) => {
                 if (child.isMesh) {
                     child.material.map = texture;
                     child.material.needsUpdate = true;
                 }
             });
+            
+            // モデルのスケールを調整（ARでは小さめに）
+            model.scale.set(0.5, 0.5, 0.5);
+            
+            // モデルを少し下げて床の上に配置
+            model.position.set(0, -0.5, -1);
+            
             scene.add(model);
+            
+            // モデルの読み込みが完了したらローディングテキストを非表示に
+            document.getElementById('loading-text').style.display = 'none';
+            
+            // ARがサポートされているか確認
+            if (navigator.xr) {
+                navigator.xr.isSessionSupported('immersive-ar').then((supported) => {
+                    if (supported) {
+                        // ARボタンを表示
+                        const arButton = document.getElementById('ar-button');
+                        arButton.style.display = 'block';
+                        arButton.addEventListener('click', startAR);
+                    } else {
+                        alert('お使いのデバイスはARをサポートしていません。');
+                    }
+                });
+            } else {
+                alert('WebXRはお使いのブラウザでサポートされていません。');
+            }
+            
+            // 通常モードでのアニメーション開始
             animate();
         });
 
-        // OrbitControlsの作成
+        // OrbitControlsの作成（通常モード用）
         const controls = new THREE.OrbitControls(camera, renderer.domElement);
         controls.enableDamping = true;
 
-        // アニメーション関数
+        // ARセッションを開始する関数
+        function startAR() {
+            // ARセッションのオプション
+            const sessionInit = {
+                requiredFeatures: ['hit-test'], // ヒットテスト機能を要求
+                optionalFeatures: ['dom-overlay'], // DOMオーバーレイを使用
+                domOverlay: { root: document.body } // オーバーレイのルート要素
+            };
+            
+            // ARセッションを開始
+            navigator.xr.requestSession('immersive-ar', sessionInit).then((session) => {
+                // セッションが終了したときの処理
+                session.addEventListener('end', () => {
+                    // 通常モードに戻る
+                    controls.enabled = true;
+                    animate();
+                });
+                
+                // レンダラーをARセッションに接続
+                renderer.xr.setSession(session);
+                
+                // OrbitControlsを無効化（ARモードでは使用しない）
+                controls.enabled = false;
+                
+                // ARセッション用のアニメーションループを設定
+                renderer.setAnimationLoop(renderAR);
+            });
+        }
+
+        // 通常モードのアニメーション関数
         function animate() {
             requestAnimationFrame(animate);
             controls.update();
+            renderer.render(scene, camera);
+        }
+        
+        // ヒットテスト結果を保存する変数
+        let hitTestSource = null;
+        let hitTestSourceRequested = false;
+        let modelPlaced = false;
+
+        // ARモードのレンダリング関数
+        function renderAR(timestamp, frame) {
+            if (!frame) return;
+            
+            const session = renderer.xr.getSession();
+            const referenceSpace = renderer.xr.getReferenceSpace();
+            
+            // ヒットテストソースの初期化（最初の1回のみ）
+            if (!hitTestSourceRequested) {
+                session.requestReferenceSpace('viewer').then((viewerSpace) => {
+                    session.requestHitTestSource({ space: viewerSpace }).then((source) => {
+                        hitTestSource = source;
+                    });
+                });
+                
+                // 画面タップ時のイベントリスナーを追加
+                session.addEventListener('select', () => {
+                    if (modelPlaced) {
+                        // すでにモデルが配置されている場合は回転方向を変更
+                        model.rotation.y += Math.PI / 4;
+                    }
+                });
+                
+                hitTestSourceRequested = true;
+            }
+            
+            // ヒットテスト結果の処理
+            if (hitTestSource && !modelPlaced) {
+                const hitTestResults = frame.getHitTestResults(hitTestSource);
+                
+                if (hitTestResults.length > 0) {
+                    const hit = hitTestResults[0];
+                    const pose = hit.getPose(referenceSpace);
+                    
+                    if (pose) {
+                        // ヒットした位置にモデルを配置
+                        model.visible = true;
+                        model.position.set(
+                            pose.transform.position.x,
+                            pose.transform.position.y,
+                            pose.transform.position.z
+                        );
+                        
+                        // モデルを配置済みとマーク
+                        modelPlaced = true;
+                        
+                        // ARセッション中のガイドメッセージを表示
+                        const message = document.createElement('div');
+                        message.style.position = 'absolute';
+                        message.style.bottom = '80px';
+                        message.style.left = '50%';
+                        message.style.transform = 'translateX(-50%)';
+                        message.style.background = 'rgba(0, 0, 0, 0.5)';
+                        message.style.color = 'white';
+                        message.style.padding = '10px 20px';
+                        message.style.borderRadius = '4px';
+                        message.style.fontFamily = 'sans-serif';
+                        message.textContent = '画面をタップすると猫が回転します';
+                        document.body.appendChild(message);
+                        
+                        // 5秒後にメッセージを消す
+                        setTimeout(() => {
+                            document.body.removeChild(message);
+                        }, 5000);
+                    }
+                }
+            }
+            
+            // モデルが配置されている場合、ゆっくり回転させる
+            if (model && modelPlaced) {
+                model.rotation.y += 0.005;
+            }
+            
+            // シーンをレンダリング
             renderer.render(scene, camera);
         }
 
