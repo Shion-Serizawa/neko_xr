@@ -106,10 +106,58 @@
             model.scale.set(0.5, 0.5, 0.5);
             
             // モデルを少し下げて床の上に配置
-            model.position.set(0, -0.5, -1);
-            
+            model.position.set(0, -0.5, -0.5); // 猫の位置を近くに調整
+
             scene.add(model);
-            
+
+            // 位置調整用のUIを追加
+            const positionControls = document.createElement('div');
+            positionControls.style.position = 'absolute';
+            positionControls.style.bottom = '80px';
+            positionControls.style.left = '50%';
+            positionControls.style.transform = 'translateX(-50%)';
+            positionControls.style.backgroundColor = 'rgba(0, 0, 0, 0.5)';
+            positionControls.style.color = 'white';
+            positionControls.style.padding = '10px';
+            positionControls.style.borderRadius = '4px';
+            positionControls.style.fontFamily = 'sans-serif';
+            positionControls.style.display = 'flex';
+            positionControls.style.gap = '10px';
+
+            // 前進ボタン
+            const forwardButton = document.createElement('button');
+            forwardButton.textContent = '前進';
+            forwardButton.addEventListener('click', () => {
+                model.position.z -= 0.1;
+            });
+            positionControls.appendChild(forwardButton);
+
+            // 後退ボタン
+            const backwardButton = document.createElement('button');
+            backwardButton.textContent = '後退';
+            backwardButton.addEventListener('click', () => {
+                model.position.z += 0.1;
+            });
+            positionControls.appendChild(backwardButton);
+
+            // 左移動ボタン
+            const leftButton = document.createElement('button');
+            leftButton.textContent = '左';
+            leftButton.addEventListener('click', () => {
+                model.position.x -= 0.1;
+            });
+            positionControls.appendChild(leftButton);
+
+            // 右移動ボタン
+            const rightButton = document.createElement('button');
+            rightButton.textContent = '右';
+            rightButton.addEventListener('click', () => {
+                model.position.x += 0.1;
+            });
+            positionControls.appendChild(rightButton);
+
+            document.body.appendChild(positionControls);
+
             // モデルの読み込みが完了したらローディングテキストを非表示に
             document.getElementById('loading-text').style.display = 'none';
             
@@ -170,7 +218,10 @@
         function animate() {
             requestAnimationFrame(animate);
             controls.update();
-            renderer.render(scene, camera);
+            // モデルが配置されている場合にのみレンダリング
+            if (model) {
+                renderer.render(scene, camera);
+            }
         }
         
         // ヒットテスト結果を保存する変数
