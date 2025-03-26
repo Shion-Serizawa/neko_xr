@@ -54,6 +54,8 @@
     <script>
         // シーンの作成
         const scene = new THREE.Scene();
+        // ARの場合、背景をnullに設定してカメラフィードを表示
+        scene.background = null;
 
         // カメラの作成
         const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
@@ -67,6 +69,8 @@
         renderer.setSize(window.innerWidth, window.innerHeight);
         renderer.outputEncoding = THREE.sRGBEncoding; // 色の補正
         renderer.xr.enabled = true; // WebXRを有効化
+        // AR用の参照空間をローカルに設定
+        renderer.xr.setReferenceSpaceType('local');
         document.body.appendChild(renderer.domElement);
 
         // 環境光
@@ -191,10 +195,8 @@
                 
                 // 画面タップ時のイベントリスナーを追加
                 session.addEventListener('select', () => {
-                    if (modelPlaced) {
-                        // すでにモデルが配置されている場合は回転方向を変更
-                        model.rotation.y += Math.PI / 4;
-                    }
+                    // 既にモデルが配置済みなら回転方向を変更
+                    model.rotation.y += Math.PI / 4;
                 });
                 
                 hitTestSourceRequested = true;
@@ -242,8 +244,8 @@
                 }
             }
             
-            // モデルが配置されている場合、ゆっくり回転させる
-            if (model && modelPlaced) {
+            // モデルが存在する場合は常にゆっくり回転させる
+            if (model) {
                 model.rotation.y += 0.005;
             }
             
