@@ -22,6 +22,12 @@
             pointer-events: none;
             z-index: 1;
         }
+        #info p {
+            margin: 0;
+            padding: 5px;
+            color: rgba(0, 0, 0, 0.5);
+            border-radius: 5px;
+        }
     </style>
 </head>
 <body>
@@ -29,7 +35,7 @@
         <p>Meta Quest VRコントローラー表示</p>
         <p>VRデバイスを接続してVRモードを開始するには「VRを開始」ボタンをクリックしてください</p>
     </div>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://unpkg.com/three@0.142.0/build/three.min.js"></script>
     <script>
         // Three.jsの初期化
         const scene = new THREE.Scene();
@@ -103,7 +109,7 @@
                             // WebXR's requestReferenceSpace only works if the corresponding feature
                             // was requested at session creation time.
                             const sessionInit = {
-                                optionalFeatures: ['local-floor', 'bounded-floor', 'hand-tracking', 'layers']
+                                optionalFeatures: ['local-floor']
                             };
                             navigator.xr.requestSession('immersive-vr', sessionInit)
                                 .then(onSessionStarted)
