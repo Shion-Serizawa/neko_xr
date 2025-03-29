@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="ja">
+
 <head>
     <meta charset="UTF-8">
     <!-- VR/AR表示に必要なmetaタグ -->
@@ -9,8 +10,17 @@
     <!-- WebXRはHTTPS接続が必須 -->
     <title>Three.js Meta Quest VR/AR表示</title>
     <style>
-        body { margin: 0; overflow: hidden; background-color: #000; /* AR背景は黒が一般的 */ }
-        canvas { display: block; }
+        body {
+            margin: 0;
+            overflow: hidden;
+            background-color: #000;
+            /* AR背景は黒が一般的 */
+        }
+
+        canvas {
+            display: block;
+        }
+
         #info {
             position: absolute;
             top: 10px;
@@ -19,40 +29,57 @@
             color: white;
             font-family: Arial, sans-serif;
             z-index: 1;
-            pointer-events: none; /* クリックイベントを透過させる */
+            pointer-events: none;
+            /* クリックイベントを透過させる */
         }
+
         #info p {
             margin: 5px 0;
             background-color: rgba(0, 0, 0, 0.7);
             padding: 10px;
-            display: inline-block; /* 中央寄せのため */
+            display: inline-block;
+            /* 中央寄せのため */
             border-radius: 5px;
         }
+
         /* ボタンコンテナのスタイル */
         #button-container {
             position: absolute;
             bottom: 20px;
             left: 50%;
             transform: translateX(-50%);
-            display: flex; /* ボタンを横並びにする */
-            gap: 10px; /* ボタン間のスペース */
+            display: flex;
+            /* ボタンを横並びにする */
+            gap: 10px;
+            /* ボタン間のスペース */
             z-index: 999;
         }
+
         /* Three.js提供のボタンのデフォルトスタイルを少し上書き */
-        button#VRButton, button#ARButton {
-            position: static !important; /* absoluteを解除 */
-            transform: none !important; /* transformを解除 */
-            left: auto !important; /* leftを解除 */
-            bottom: auto !important; /* bottomを解除 */
-            width: 120px !important; /* 幅を調整 */
-            opacity: 0.7 !important; /* 少し透明に */
+        button#VRButton,
+        button#ARButton {
+            position: static !important;
+            /* absoluteを解除 */
+            transform: none !important;
+            /* transformを解除 */
+            left: auto !important;
+            /* leftを解除 */
+            bottom: auto !important;
+            /* bottomを解除 */
+            width: 120px !important;
+            /* 幅を調整 */
+            opacity: 0.7 !important;
+            /* 少し透明に */
             cursor: pointer !important;
-             /* ARButtonが生成されない場合もあるので初期表示は隠す */
+            /* ARButtonが生成されない場合もあるので初期表示は隠す */
             display: none;
         }
-        button#VRButton:hover, button#ARButton:hover {
+
+        button#VRButton:hover,
+        button#ARButton:hover {
             opacity: 1.0 !important;
         }
+
         /* レティクル（ヒットテストの目印）のスタイル */
         #reticle {
             position: absolute;
@@ -62,15 +89,32 @@
             border: 3px solid white;
             box-shadow: 0 0 10px rgba(255, 255, 255, 0.7);
             pointer-events: none;
-            display: none; /* 初期状態は非表示 */
+            display: none;
+            /* 初期状態は非表示 */
             z-index: 2;
             /* 中央合わせのための調整 */
             left: 50%;
             top: 50%;
             transform: translate(-50%, -50%);
         }
+
+        button#VRButton,
+        button#ARButton {
+            /* 既存のスタイルはそのままに */
+            background-color: #0066cc !important;
+            /* 青色の背景 */
+            color: white !important;
+            /* 白い文字 */
+            border: 2px solid white !important;
+            /* 白い枠線 */
+            font-weight: bold !important;
+            /* 太字 */
+            opacity: 1.0 !important;
+            /* 完全に不透明に */
+        }
     </style>
 </head>
+
 <body>
     <div id="info">
         <p>Meta Quest VR/AR表示</p>
@@ -156,20 +200,20 @@
 
             // --- XRサポート状況のチェックとボタンの作成 ---
             if ('xr' in navigator) {
-                 try {
+                try {
                     const vrSupported = await navigator.xr.isSessionSupported('immersive-vr');
                     const arSupported = await navigator.xr.isSessionSupported('immersive-ar');
 
                     if (vrSupported) {
                         const vrButton = VRButton.createButton(renderer);
-                         // VRButtonにIDを付けてスタイル適用可能にする
+                        // VRButtonにIDを付けてスタイル適用可能にする
                         vrButton.id = 'VRButton';
                         vrButton.style.display = 'block'; // 表示する
                         vrButton.addEventListener('click', () => console.log("VR Button clicked"));
                         buttonContainer.appendChild(vrButton);
                     } else {
                         console.log("Immersive VR not supported");
-                         if (!arSupported) xrSupportStatusElement.textContent = "お使いのデバイス/ブラウザはVR/ARに対応していません。";
+                        if (!arSupported) xrSupportStatusElement.textContent = "お使いのデバイス/ブラウザはVR/ARに対応していません。";
                     }
 
                     if (arSupported) {
@@ -184,7 +228,7 @@
                         arButton.style.display = 'block'; // 表示する
                         arButton.addEventListener('click', () => console.log("AR Button clicked"));
                         buttonContainer.appendChild(arButton);
-                         // ARButtonのエラーハンドリング
+                        // ARButtonのエラーハンドリング
                         arButton.addEventListener('error', (event) => {
                             console.error("AR Initialization Error:", event.detail?.error || event);
                             xrSupportStatusElement.textContent = `ARエラー: ${event.detail?.error?.message || '不明なエラー'}`;
@@ -195,13 +239,13 @@
                         });
                     } else {
                         console.log("Immersive AR not supported");
-                         if (!vrSupported) xrSupportStatusElement.textContent = "お使いのデバイス/ブラウザはVR/ARに対応していません。";
-                         else if (xrSupportStatusElement.textContent === "") xrSupportStatusElement.textContent = "ARモード非対応です。"; // VRは対応している場合
+                        if (!vrSupported) xrSupportStatusElement.textContent = "お使いのデバイス/ブラウザはVR/ARに対応していません。";
+                        else if (xrSupportStatusElement.textContent === "") xrSupportStatusElement.textContent = "ARモード非対応です。"; // VRは対応している場合
                     }
 
-                     if (!vrSupported && !arSupported) {
+                    if (!vrSupported && !arSupported) {
                         // どちらも非対応の場合
-                         const p = document.createElement('p');
+                        const p = document.createElement('p');
                         p.textContent = "WebXR非対応ブラウザです。";
                         buttonContainer.appendChild(p);
                     }
@@ -213,7 +257,7 @@
 
             } else {
                 xrSupportStatusElement.textContent = "WebXR APIが利用できません。";
-                 const p = document.createElement('p');
+                const p = document.createElement('p');
                 p.textContent = "WebXR非対応ブラウザです。";
                 buttonContainer.appendChild(p);
             }
@@ -284,7 +328,7 @@
                     controller.visible = false; // ポインターなども非表示にする場合
                 });
                 hand.addEventListener('disconnected', (event) => {
-                     console.log(`Hand ${i} disconnected`, event.data);
+                    console.log(`Hand ${i} disconnected`, event.data);
                     // ハンドトラッキングが切れたら、コントローラーモデルを再表示
                     controllerGrip.visible = true;
                     controller.visible = true;
@@ -298,7 +342,7 @@
                     console.log(`Controller ${i} connected:`, event.data);
                     // ハンドトラッキングが有効でなければポインターを追加
                     if (!hand.visible) { // hand.visible は接続状態を見るのに使えるかもしれない
-                       addPointer(controller);
+                        addPointer(controller);
                     }
                 });
                 controller.addEventListener('disconnected', () => {
@@ -332,11 +376,11 @@
             const index = controller.userData.controllerIndex;
             console.log(`Controller ${index} select start`);
 
-             // ARモードで、レティクルが表示されている場合、その位置にオブジェクトを配置
+            // ARモードで、レティクルが表示されている場合、その位置にオブジェクトを配置
             if (renderer.xr.isPresenting && currentSession?.environmentBlendMode === 'additive' && reticleMesh.visible) {
-                 placeObjectAtReticle();
+                placeObjectAtReticle();
             } else {
-                 // VRモードやレティクル非表示時の処理 (例: ポインターの色変更)
+                // VRモードやレティクル非表示時の処理 (例: ポインターの色変更)
                 const pointer = controller.getObjectByName('pointer');
                 if (pointer && pointer.material) {
                     pointer.material.color.setHex(0x00ff00); // 緑色に
@@ -350,19 +394,19 @@
             console.log(`Controller ${index} select end`);
 
             // VRモードなどの処理 (例: ポインターの色を戻す)
-             if (!renderer.xr.isPresenting || currentSession?.environmentBlendMode !== 'additive') {
+            if (!renderer.xr.isPresenting || currentSession?.environmentBlendMode !== 'additive') {
                 const pointer = controller.getObjectByName('pointer');
                 if (pointer && pointer.material) {
                     pointer.material.color.setHex(0xffffff); // 白色に戻す
                 }
             }
-             // ARでのオブジェクト配置は selectstart で行ったので、ここでは特になし
+            // ARでのオブジェクト配置は selectstart で行ったので、ここでは特になし
         }
 
         // AR用: レティクルの位置にオブジェクトを配置する関数
         function placeObjectAtReticle() {
             const geometry = new THREE.BoxGeometry(0.1, 0.1, 0.1); // 小さなキューブ
-             const material = new THREE.MeshStandardMaterial({
+            const material = new THREE.MeshStandardMaterial({
                 color: Math.random() * 0xffffff, // ランダムな色
                 roughness: 0.7,
                 metalness: 0.3
@@ -395,39 +439,39 @@
                 scene.background = new THREE.Color(0x202020); // VR用の背景色を設定
                 if (gridHelper) gridHelper.visible = true; // 床グリッドを表示
                 renderer.xr.setReferenceSpaceType('local-floor'); // VRは床基準が一般的
-                 reticleMesh.visible = false; // VRではレティクル不要
+                reticleMesh.visible = false; // VRではレティクル不要
                 hitTestSourceRequested = false; // VRではヒットテスト不要
                 hitTestSource = null;
             } else {
                 // AR モード開始 ('additive' または 'alpha-blend')
                 console.log("Entering AR Mode");
-                 scene.background = null; // ARでは背景をnullに (カメラ映像表示のため)
+                scene.background = null; // ARでは背景をnullに (カメラ映像表示のため)
                 if (gridHelper) gridHelper.visible = false; // ARでは床グリッド不要
-                 reticleMesh.visible = true; // ARではレティクルを表示
+                reticleMesh.visible = true; // ARではレティクルを表示
 
-                 // AR用の参照空間とヒットテストソースを要求
+                // AR用の参照空間とヒットテストソースを要求
                 // const viewerSpace = await currentSession.requestReferenceSpace('viewer');
-                 // ARではlocal-floorが使えることが多い（対応していれば）
-                 let referenceSpaceType = 'local'; // デフォルトはlocal
-                 if ( renderer.xr.getReferenceSpace()?.type === 'local-floor') {
-                      referenceSpaceType = 'local-floor';
-                      console.log("Using local-floor reference space for AR");
-                 } else {
-                     console.log("Using local reference space for AR");
-                 }
-                 const referenceSpace = await currentSession.requestReferenceSpace(referenceSpaceType);
-                 // ARヒットテストのソースをリクエスト
-                 // ビューワー空間 (画面中央からのレイ) を使うのが一般的
-                 const viewerReferenceSpace = await currentSession.requestReferenceSpace('viewer');
-                 try {
+                // ARではlocal-floorが使えることが多い（対応していれば）
+                let referenceSpaceType = 'local'; // デフォルトはlocal
+                if (renderer.xr.getReferenceSpace()?.type === 'local-floor') {
+                    referenceSpaceType = 'local-floor';
+                    console.log("Using local-floor reference space for AR");
+                } else {
+                    console.log("Using local reference space for AR");
+                }
+                const referenceSpace = await currentSession.requestReferenceSpace(referenceSpaceType);
+                // ARヒットテストのソースをリクエスト
+                // ビューワー空間 (画面中央からのレイ) を使うのが一般的
+                const viewerReferenceSpace = await currentSession.requestReferenceSpace('viewer');
+                try {
                     hitTestSource = await currentSession.requestHitTestSource({ space: viewerReferenceSpace });
                     hitTestSourceRequested = true;
                     console.log("Hit test source requested successfully.");
-                 } catch(e) {
-                     console.error("Could not request hit test source:", e);
-                     hitTestSourceRequested = false;
-                      reticleMesh.visible = false; // ヒットテストが使えないならレティクルも消す
-                 }
+                } catch (e) {
+                    console.error("Could not request hit test source:", e);
+                    hitTestSourceRequested = false;
+                    reticleMesh.visible = false; // ヒットテストが使えないならレティクルも消す
+                }
             }
         }
 
@@ -479,13 +523,13 @@
         }
 
         function render(timestamp, frame) {
-             // XRセッション中のみ実行する処理
+            // XRセッション中のみ実行する処理
             if (renderer.xr.isPresenting && currentSession) {
 
                 // ARヒットテスト処理
-                 // currentSession の environmentBlendMode を再度確認する方が安全
-                 if (currentSession.environmentBlendMode !== 'opaque' && hitTestSourceRequested && hitTestSource && frame) {
-                     const hitTestResults = frame.getHitTestResults(hitTestSource);
+                // currentSession の environmentBlendMode を再度確認する方が安全
+                if (currentSession.environmentBlendMode !== 'opaque' && hitTestSourceRequested && hitTestSource && frame) {
+                    const hitTestResults = frame.getHitTestResults(hitTestSource);
 
                     if (hitTestResults.length > 0) {
                         // 最初のヒット結果を使用
@@ -494,7 +538,7 @@
                         // ヒットした位置のポーズを取得
                         const hitPose = hit.getPose(referenceSpace);
 
-                         // レティクルメッシュの位置と向きを更新
+                        // レティクルメッシュの位置と向きを更新
                         reticleMesh.matrix.fromArray(hitPose.transform.matrix);
                         reticleMesh.visible = true;
                     } else {
@@ -502,10 +546,10 @@
                         reticleMesh.visible = false;
                     }
                 } else {
-                     // ARモードでない、またはヒットテストが利用できない場合は非表示
-                     reticleMesh.visible = false;
+                    // ARモードでない、またはヒットテストが利用できない場合は非表示
+                    reticleMesh.visible = false;
                 }
-                 // ハンドトラッキングの更新 (Three.jsが内部で行うが、カスタム処理を追加可能)
+                // ハンドトラッキングの更新 (Three.jsが内部で行うが、カスタム処理を追加可能)
                 // hands.forEach(hand => { /* handの関節データなどを使用 */ });
             }
 
@@ -515,4 +559,5 @@
 
     </script>
 </body>
+
 </html>
